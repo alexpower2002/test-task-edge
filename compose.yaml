@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lendingparser
+      POSTGRES_PASSWORD: lendingparser
+      POSTGRES_DB: lendingparser
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lendingparser"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  lendingparser:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    network_mode: "host"
+    environment:
+      PG_DSN: postgres://lendingparser:lendingparser@localhost:5432/lendingparser
+    restart: unless-stopped
+
+volumes:
+  pgdata:

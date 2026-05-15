@@ -1,0 +1,23 @@
+[
+  {
+    "network": "ethereum",
+    "rpc_url": "https://ethereum-rpc.publicnode.com",
+    "wallets": [
+      "0xe1adf7cd79da4234beea798e934f483533ec1691",
+      "0xf0e04EdA5b8362Ec7100eA4147df79A94ce75B2c",
+      "0xbf219de59653a2bdda955b9e9a20f9200707e949",
+      "0xFB78AA8F38843629e89951D9db6FdC398d75e0A3",
+      "0x6CC60A0b57bc882A0471980D0e2D4aD7DDf3C4bD",
+      "0x64471d103A7f77262529383D53Bdd28b260B1aE8",
+      "0x063ADACc01dB782093d0310bf3d5755d2aDEc424"
+    ],
+    "poll_interval": "12s",
+    "contracts": {
+      "aave_pool": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+      "aave_data_provider": "0x0a16f2FCC0D44FaE41cc54e079281D84A363bECD",
+      "aave_oracle": "0x54586bE62E3c3580375aE3723C145253060Ca0C2",
+      "morpho_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+      "morpho_deploy_block": 19336000
+    }
+  }
+]
