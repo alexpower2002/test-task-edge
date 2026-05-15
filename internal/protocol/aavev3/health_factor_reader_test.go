@@ -34,6 +34,74 @@ func word(h string) string {
 	return strings.Repeat("0", 64-len(h)) + h
 }
 
+func TestParseHealthFactor(t *testing.T) {
+	hfValue := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
+	hfWord := word(hfValue.Text(16))
+
+	max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
+	maxWord := word(max.Text(16))
+
+	makeWords := func(h string, n int) []string {
+		w := make([]string, n)
+		for i := range w {
+			w[i] = strings.Repeat("0", 64)
+		}
+		if n > 5 {
+			w[5] = h
+		}
+		return w
+	}
+
+	tests := []struct {
+		name    string
+		words   []string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:  "ok",
+			words: makeWords(hfWord, 6),
+			want:  "1.000000000000000000",
+		},
+		{
+			name:  "small_value",
+			words: makeWords(word(new(big.Int).SetInt64(1).Text(16)), 6),
+			want:  "0.000000000000000001",
+		},
+		{
+			name:  "max_uint256",
+			words: makeWords(maxWord, 6),
+			want:  "0",
+		},
+		{
+			name:    "too_few_words",
+			words:   makeWords(hfWord, 3),
+			wantErr: true,
+		},
+		{
+			name:    "more_than_6_words",
+			words:   makeWords(hfWord, 10),
+			want:    "1.000000000000000000",
+		},
+		{
+			name:    "invalid_word",
+			words:   []string{strings.Repeat("0", 64), strings.Repeat("0", 64), strings.Repeat("0", 64), strings.Repeat("0", 64), strings.Repeat("0", 64), "zz"},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseHealthFactor(tt.words)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestGetHealthFactor(t *testing.T) {
 	pool, err := utils.ParseAddress("0x00000000000000000000000000000000000000aa")
 	require.NoError(t, err)

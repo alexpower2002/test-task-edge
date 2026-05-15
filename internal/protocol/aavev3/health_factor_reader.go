@@ -32,6 +32,10 @@ func (r *HealthFactorReader) GetHealthFactor(ctx context.Context, user types.Add
 	if err != nil {
 		return "", err
 	}
+	return parseHealthFactor(words)
+}
+
+func parseHealthFactor(words []string) (string, error) {
 	if len(words) < 6 {
 		return "", fmt.Errorf("unexpected account data word count %d", len(words))
 	}
