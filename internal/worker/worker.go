@@ -16,7 +16,7 @@ type blockPoller interface {
 	BlockByNumber(ctx context.Context, number uint64) (types.BlockRef, error)
 }
 
-type blockParser interface {
+type positionsParser interface {
 	ParsePositions(ctx context.Context, wallets []types.Address, block types.BlockRef) ([]protocol.Position, error)
 }
 
@@ -27,13 +27,13 @@ type positionSaver interface {
 type Worker struct {
 	network      string
 	poller       blockPoller
-	parser       blockParser
+	parser       positionsParser
 	wallets      []types.Address
 	saver        positionSaver
 	checkTimeout time.Duration
 }
 
-func New(network string, poller blockPoller, parser blockParser, wallets []types.Address, saver positionSaver) *Worker {
+func New(network string, poller blockPoller, parser positionsParser, wallets []types.Address, saver positionSaver) *Worker {
 	return &Worker{network: network, poller: poller, parser: parser, wallets: wallets, saver: saver, checkTimeout: checkInterval}
 }
 
