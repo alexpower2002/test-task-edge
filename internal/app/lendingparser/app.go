@@ -57,24 +57,24 @@ func (a *app) registerJob(cfg config.Config, job config.JobConfig) error {
 	tokenReader := ethereum.NewTokenReader(client)
 	tokenProvider := ethereum.NewTokenProvider(tokenReader)
 
-	aaveReserveDiscoverer := aavev3.NewReserveDiscoverer(client, job.Contracts.AaveDataProvider)
-	aaveUserDataReader := aavev3.NewUserDataReader(client, job.Contracts.AaveDataProvider)
-	aaveAssetPricer := aavev3.NewAssetPricer(client, job.Contracts.AaveOracle)
-	aaveHealthReader := aavev3.NewHealthFactorReader(client, job.Contracts.AavePool)
+	aaveReserveDiscoverer := aavev3.NewReserveDiscoverer(client, job.Aave.DataProvider)
+	aaveUserDataReader := aavev3.NewUserDataReader(client, job.Aave.DataProvider)
+	aaveAssetPricer := aavev3.NewAssetPricer(client, job.Aave.Oracle)
+	aaveHealthReader := aavev3.NewHealthFactorReader(client, job.Aave.Pool)
 
-	morphoPositionReader := morpho.NewPositionReader(client, job.Contracts.MorphoAddress)
-	morphoMarketParamsReader := morpho.NewMarketParamsReader(client, job.Contracts.MorphoAddress)
-	morphoMarketDataReader := morpho.NewMarketDataReader(client, job.Contracts.MorphoAddress)
+	morphoPositionReader := morpho.NewPositionReader(client, job.Morpho.Address)
+	morphoMarketParamsReader := morpho.NewMarketParamsReader(client, job.Morpho.Address)
+	morphoMarketDataReader := morpho.NewMarketDataReader(client, job.Morpho.Address)
 	morphoOraclePricer := morpho.NewOraclePricer(client)
 	morphoHealthComputer := morpho.NewHealthFactorReader()
 
-	disc := morpho.NewMarketDiscoverer(client, job.Contracts.MorphoAddress)
+	disc := morpho.NewMarketDiscoverer(client, job.Morpho.Address, job.Morpho.DeployBlock)
 	provider := morpho.NewMarketProvider(disc)
 	parser := protocol.NewComposite(
-		aavev3.NewParser(job.Contracts.AavePool, tokenProvider, aaveReserveDiscoverer, aaveUserDataReader, aaveAssetPricer, aaveHealthReader),
-		morpho.NewParser(tokenProvider, provider, morphoPositionReader, morphoMarketParamsReader, morphoMarketDataReader, morphoOraclePricer, morphoHealthComputer),
+		protocol.SubParser{Parser: aavev3.NewParser(job.Aave.Pool, tokenProvider, aaveReserveDiscoverer, aaveUserDataReader, aaveAssetPricer, aaveHealthReader), Wallets: job.AaveWallets},
+		protocol.SubParser{Parser: morpho.NewParser(tokenProvider, provider, morphoPositionReader, morphoMarketParamsReader, morphoMarketDataReader, morphoOraclePricer, morphoHealthComputer, job.Morpho.Parallelism), Wallets: job.MorphoWallets},
 	)
-	a.workers = append(a.workers, worker.New(job.Network, client, parser, job.Wallets, a.storage))
+	a.workers = append(a.workers, worker.New(job.Network, client, parser, nil, a.storage))
 
 	return nil
 }

@@ -62,13 +62,13 @@ func TestScanMarkets(t *testing.T) {
 
 	log1 := gethTypes.Log{
 		Topics: []common.Hash{
-			common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
+			common.HexToHash("0xac4b2400f169220b0c0afdde7a0b32e775ba727ea1cb30b35f935cdaab8683ac"),
 			common.HexToHash("0x0100000000000000000000000000000000000000000000000000000000000000"),
 		},
 	}
 	log2 := gethTypes.Log{
 		Topics: []common.Hash{
-			common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
+			common.HexToHash("0xac4b2400f169220b0c0afdde7a0b32e775ba727ea1cb30b35f935cdaab8683ac"),
 			common.HexToHash("0x0200000000000000000000000000000000000000000000000000000000000000"),
 		},
 	}
@@ -76,44 +76,50 @@ func TestScanMarkets(t *testing.T) {
 	tests := []struct {
 		name        string
 		filterer    logFilterer
+		deployBlock uint64
 		blockNumber uint64
 		want        []types.Bytes32
 		wantErr     bool
 	}{
 		{
 			name:        "single_market",
-			filterer:    &stubLogFiltererAssert{wantFrom: big.NewInt(42), wantTo: big.NewInt(42), logs: []gethTypes.Log{log1}},
+			filterer:    &stubLogFiltererAssert{wantFrom: big.NewInt(0), wantTo: big.NewInt(42), logs: []gethTypes.Log{log1}},
+			deployBlock: 0,
 			blockNumber: 42,
 			want:        []types.Bytes32{id1},
 		},
 		{
 			name:        "multiple_markets",
-			filterer:    &stubLogFiltererAssert{wantFrom: big.NewInt(99), wantTo: big.NewInt(99), logs: []gethTypes.Log{log1, log2}},
+			filterer:    &stubLogFiltererAssert{wantFrom: big.NewInt(0), wantTo: big.NewInt(99), logs: []gethTypes.Log{log1, log2}},
+			deployBlock: 0,
 			blockNumber: 99,
 			want:        []types.Bytes32{id1, id2},
 		},
 		{
 			name:        "deduplication",
 			filterer:    &stubLogFiltererSuccess{logs: []gethTypes.Log{log1, log1}},
-			blockNumber: 0,
+			deployBlock: 0,
+			blockNumber: 100,
 			want:        []types.Bytes32{id1},
 		},
 		{
 			name:        "no_logs",
 			filterer:    &stubLogFiltererSuccess{logs: nil},
-			blockNumber: 0,
+			deployBlock: 0,
+			blockNumber: 100,
 			want:        nil,
 		},
 		{
 			name:        "filter_error",
 			filterer:    &stubLogFiltererError{},
-			blockNumber: 0,
+			deployBlock: 0,
+			blockNumber: 100,
 			wantErr:     true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewMarketDiscoverer(tt.filterer, contractAddr)
+			d := NewMarketDiscoverer(tt.filterer, contractAddr, tt.deployBlock)
 			got, err := d.ScanMarkets(context.Background(), tt.blockNumber)
 			if tt.wantErr {
 				require.Error(t, err)

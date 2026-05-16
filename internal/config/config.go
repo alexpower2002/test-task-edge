@@ -13,38 +13,52 @@ import (
 	"test-task-edge/internal/utils"
 )
 
-type ContractsConfig struct {
-	AavePool         types.Address `json:"aave_pool"`
-	AaveDataProvider types.Address `json:"aave_data_provider"`
-	AaveOracle       types.Address `json:"aave_oracle"`
-	MorphoAddress    types.Address `json:"morpho_address"`
+type AaveConfig struct {
+	Pool         types.Address `json:"pool"`
+	DataProvider types.Address `json:"data_provider"`
+	Oracle       types.Address `json:"oracle"`
+}
+
+type MorphoConfig struct {
+	Address     types.Address `json:"address"`
+	DeployBlock uint64        `json:"deploy_block"`
+	Parallelism int           `json:"parallelism"`
 }
 
 type JobConfig struct {
 	Network      string          `json:"network"`
 	RPCURL       string          `json:"rpc_url"`
-	Wallets      []types.Address `json:"wallets"`
 	PollInterval time.Duration   `json:"poll_interval"`
-	Contracts    ContractsConfig `json:"contracts"`
+	Aave         AaveConfig      `json:"aave"`
+	Morpho       MorphoConfig    `json:"morpho"`
+	AaveWallets  []types.Address `json:"-"`
+	MorphoWallets []types.Address `json:"-"`
 }
 
 type jobsFile struct {
 	Jobs []jobEntry `json:"jobs"`
 }
 
-type jobEntry struct {
-	Network      string         `json:"network"`
-	RPCURL       string         `json:"rpc_url"`
-	Wallets      []string       `json:"wallets"`
-	PollInterval string         `json:"poll_interval"`
-	Contracts    contractsEntry `json:"contracts"`
+type aaveEntry struct {
+	Pool         string   `json:"pool"`
+	DataProvider string   `json:"data_provider"`
+	Oracle       string   `json:"oracle"`
+	Wallets      []string `json:"wallets"`
 }
 
-type contractsEntry struct {
-	AavePool         string `json:"aave_pool"`
-	AaveDataProvider string `json:"aave_data_provider"`
-	AaveOracle       string `json:"aave_oracle"`
-	MorphoAddress    string `json:"morpho_address"`
+type morphoEntry struct {
+	Address     string   `json:"address"`
+	DeployBlock *uint64  `json:"deploy_block"`
+	Wallets     []string `json:"wallets"`
+	Parallelism *int     `json:"parallelism,omitempty"`
+}
+
+type jobEntry struct {
+	Network      string        `json:"network"`
+	RPCURL       string        `json:"rpc_url"`
+	PollInterval string        `json:"poll_interval"`
+	Aave         *aaveEntry    `json:"aave"`
+	Morpho       *morphoEntry  `json:"morpho"`
 }
 
 type Config struct {
@@ -148,63 +162,103 @@ func parseJob(entry jobEntry) (JobConfig, error) {
 		return JobConfig{}, fmt.Errorf("invalid poll_interval: %w", err)
 	}
 
-	wallets, err := utils.ParseAddressList(entry.Wallets)
-	if err != nil {
-		return JobConfig{}, fmt.Errorf("wallets: %w", err)
+	if entry.Aave == nil {
+		return JobConfig{}, fmt.Errorf("aave config is required")
 	}
-	if len(wallets) == 0 {
-		return JobConfig{}, fmt.Errorf("at least one wallet required")
+	if entry.Morpho == nil {
+		return JobConfig{}, fmt.Errorf("morpho config is required")
 	}
 
-	contracts, err := parseContracts(entry.Contracts)
+	aaveCfg, err := parseAave(*entry.Aave)
 	if err != nil {
-		return JobConfig{}, fmt.Errorf("contracts: %w", err)
+		return JobConfig{}, fmt.Errorf("aave: %w", err)
+	}
+
+	morphoCfg, err := parseMorpho(*entry.Morpho)
+	if err != nil {
+		return JobConfig{}, fmt.Errorf("morpho: %w", err)
+	}
+
+	aaveWallets, err := utils.ParseAddressList(entry.Aave.Wallets)
+	if err != nil {
+		return JobConfig{}, fmt.Errorf("aave wallets: %w", err)
+	}
+	if len(aaveWallets) == 0 {
+		return JobConfig{}, fmt.Errorf("at least one aave wallet required")
+	}
+
+	morphoWallets, err := utils.ParseAddressList(entry.Morpho.Wallets)
+	if err != nil {
+		return JobConfig{}, fmt.Errorf("morpho wallets: %w", err)
+	}
+	if len(morphoWallets) == 0 {
+		return JobConfig{}, fmt.Errorf("at least one morpho wallet required")
 	}
 
 	return JobConfig{
-		Network:      entry.Network,
-		RPCURL:       entry.RPCURL,
-		Wallets:      wallets,
-		PollInterval: pollInterval,
-		Contracts:    contracts,
+		Network:       entry.Network,
+		RPCURL:        entry.RPCURL,
+		PollInterval:  pollInterval,
+		Aave:          aaveCfg,
+		Morpho:        morphoCfg,
+		AaveWallets:   aaveWallets,
+		MorphoWallets: morphoWallets,
 	}, nil
 }
 
-func parseContracts(entry contractsEntry) (ContractsConfig, error) {
-	if entry.AavePool == "" {
-		return ContractsConfig{}, fmt.Errorf("aave_pool is required")
+func parseAave(entry aaveEntry) (AaveConfig, error) {
+	if entry.Pool == "" {
+		return AaveConfig{}, fmt.Errorf("pool is required")
 	}
-	if entry.AaveDataProvider == "" {
-		return ContractsConfig{}, fmt.Errorf("aave_data_provider is required")
+	if entry.DataProvider == "" {
+		return AaveConfig{}, fmt.Errorf("data_provider is required")
 	}
-	if entry.AaveOracle == "" {
-		return ContractsConfig{}, fmt.Errorf("aave_oracle is required")
-	}
-	if entry.MorphoAddress == "" {
-		return ContractsConfig{}, fmt.Errorf("morpho_address is required")
-	}
-	pool, err := utils.ParseAddress(entry.AavePool)
-	if err != nil {
-		return ContractsConfig{}, fmt.Errorf("aave_pool: %w", err)
-	}
-	dataProvider, err := utils.ParseAddress(entry.AaveDataProvider)
-	if err != nil {
-		return ContractsConfig{}, fmt.Errorf("aave_data_provider: %w", err)
-	}
-	oracle, err := utils.ParseAddress(entry.AaveOracle)
-	if err != nil {
-		return ContractsConfig{}, fmt.Errorf("aave_oracle: %w", err)
-	}
-	morphoAddr, err := utils.ParseAddress(entry.MorphoAddress)
-	if err != nil {
-		return ContractsConfig{}, fmt.Errorf("morpho_address: %w", err)
+	if entry.Oracle == "" {
+		return AaveConfig{}, fmt.Errorf("oracle is required")
 	}
 
-	return ContractsConfig{
-		AavePool:         pool,
-		AaveDataProvider: dataProvider,
-		AaveOracle:       oracle,
-		MorphoAddress:    morphoAddr,
+	pool, err := utils.ParseAddress(entry.Pool)
+	if err != nil {
+		return AaveConfig{}, fmt.Errorf("pool: %w", err)
+	}
+	dataProvider, err := utils.ParseAddress(entry.DataProvider)
+	if err != nil {
+		return AaveConfig{}, fmt.Errorf("data_provider: %w", err)
+	}
+	oracle, err := utils.ParseAddress(entry.Oracle)
+	if err != nil {
+		return AaveConfig{}, fmt.Errorf("oracle: %w", err)
+	}
+
+	return AaveConfig{
+		Pool:         pool,
+		DataProvider: dataProvider,
+		Oracle:       oracle,
+	}, nil
+}
+
+func parseMorpho(entry morphoEntry) (MorphoConfig, error) {
+	if entry.Address == "" {
+		return MorphoConfig{}, fmt.Errorf("address is required")
+	}
+	if entry.DeployBlock == nil {
+		return MorphoConfig{}, fmt.Errorf("deploy_block is required")
+	}
+
+	addr, err := utils.ParseAddress(entry.Address)
+	if err != nil {
+		return MorphoConfig{}, fmt.Errorf("address: %w", err)
+	}
+
+	parallelism := 100
+	if entry.Parallelism != nil {
+		parallelism = *entry.Parallelism
+	}
+
+	return MorphoConfig{
+		Address:     addr,
+		DeployBlock: *entry.DeployBlock,
+		Parallelism: parallelism,
 	}, nil
 }
 

@@ -105,7 +105,7 @@ func TestWorker_savesPositions(t *testing.T) {
 			defer cancel()
 
 			saver := &mockSaver{}
-			w := New("test", tt.poller, protocol.NewComposite(&stubParserOk{}), nil, saver)
+			w := New("test", tt.poller, protocol.NewComposite(protocol.SubParser{Parser: &stubParserOk{}}), nil, saver)
 
 			_ = w.Run(ctx)
 
@@ -133,7 +133,7 @@ func TestWorker_headIncreases(t *testing.T) {
 	}()
 
 	saver := &mockSaver{}
-	w := New("test", headStub, protocol.NewComposite(&stubParserOk{}), nil, saver)
+	w := New("test", headStub, protocol.NewComposite(protocol.SubParser{Parser: &stubParserOk{}}), nil, saver)
 	w.checkTimeout = 10 * time.Millisecond
 
 	_ = w.Run(ctx)
@@ -150,7 +150,7 @@ func TestWorker_blockByNumberError(t *testing.T) {
 	defer cancel()
 
 	saver := &mockSaver{}
-	w := New("test", &stubPollerRPCErr{}, protocol.NewComposite(&stubParserOk{}), nil, saver)
+	w := New("test", &stubPollerRPCErr{}, protocol.NewComposite(protocol.SubParser{Parser: &stubParserOk{}}), nil, saver)
 
 	err := w.Run(ctx)
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
@@ -161,7 +161,7 @@ func TestWorker_contextCancel(t *testing.T) {
 	cancel()
 
 	saver := &mockSaver{}
-	w := New("test", &stubPollerFixed{ref: types.BlockRef{Number: 1}}, protocol.NewComposite(&stubParserOk{}), nil, saver)
+	w := New("test", &stubPollerFixed{ref: types.BlockRef{Number: 1}}, protocol.NewComposite(protocol.SubParser{Parser: &stubParserOk{}}), nil, saver)
 
 	err := w.Run(ctx)
 	assert.ErrorIs(t, err, context.Canceled)

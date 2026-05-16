@@ -76,7 +76,7 @@ func (c *RPCClient) callWithRetry(ctx context.Context, label string, fn func(ctx
 	var lastErr error
 	for attempt := 0; attempt <= c.MaxRetries; attempt++ {
 		if attempt > 0 {
-			wait := c.RetryWait << (attempt - 1)
+			wait := c.RetryWait
 			log.Warn().Err(lastErr).Str("rpc_call", label).Int("attempt", attempt).Dur("wait", wait).Msg("retrying RPC call")
 			select {
 			case <-ctx.Done():

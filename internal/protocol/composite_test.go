@@ -26,7 +26,7 @@ func TestComposite_ParsePositions(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		parsers []positionsParser
+		parsers []SubParser
 		wantPos int
 	}{
 		{
@@ -36,29 +36,17 @@ func TestComposite_ParsePositions(t *testing.T) {
 		},
 		{
 			name: "positions_collected",
-			parsers: []positionsParser{
-				&stubParser{
-					name:      "p1",
-					positions: []Position{{Protocol: "p1", BlockNumber: 1}},
-				},
-				&stubParser{
-					name:      "p2",
-					positions: []Position{{Protocol: "p2", BlockNumber: 1}},
-				},
+			parsers: []SubParser{
+				{Parser: &stubParser{name: "p1", positions: []Position{{Protocol: "p1", BlockNumber: 1}}}, Wallets: wallets},
+				{Parser: &stubParser{name: "p2", positions: []Position{{Protocol: "p2", BlockNumber: 1}}}, Wallets: wallets},
 			},
 			wantPos: 2,
 		},
 		{
 			name: "error_skips_that_parser",
-			parsers: []positionsParser{
-				&stubParser{
-					name:   "errParser",
-					posErr: errors.New("fail"),
-				},
-				&stubParser{
-					name:      "okParser",
-					positions: []Position{{Protocol: "ok", BlockNumber: 1}},
-				},
+			parsers: []SubParser{
+				{Parser: &stubParser{name: "errParser", posErr: errors.New("fail")}, Wallets: wallets},
+				{Parser: &stubParser{name: "okParser", positions: []Position{{Protocol: "ok", BlockNumber: 1}}}, Wallets: wallets},
 			},
 			wantPos: 1,
 		},

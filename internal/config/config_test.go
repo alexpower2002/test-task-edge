@@ -10,11 +10,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const fullContracts = `"contracts": {
-	"aave_pool": "0x1111111111111111111111111111111111111111",
-	"aave_data_provider": "0x2222222222222222222222222222222222222222",
-	"aave_oracle": "0x3333333333333333333333333333333333333333",
-	"morpho_address": "0x4444444444444444444444444444444444444444"
+const fullAave = `"aave": {
+	"pool": "0x1111111111111111111111111111111111111111",
+	"data_provider": "0x2222222222222222222222222222222222222222",
+	"oracle": "0x3333333333333333333333333333333333333333",
+	"wallets": ["0x0000000000000000000000000000000000000001"]
+}`
+
+const fullMorpho = `"morpho": {
+	"address": "0x4444444444444444444444444444444444444444",
+	"deploy_block": 100,
+	"wallets": ["0x0000000000000000000000000000000000000001"]
 }`
 
 func writeJobsFile(t *testing.T, content string) string {
@@ -35,7 +41,6 @@ func TestLoad(t *testing.T) {
 		wantJobs     int
 		wantNetwork  string
 		wantRPC      string
-		wantWallets  int
 		wantPool     string
 		wantInterval time.Duration
 	}{
@@ -45,17 +50,16 @@ func TestLoad(t *testing.T) {
 				"jobs": [{
 					"network": "ethereum",
 					"rpc_url": "http://localhost:8545",
-					"wallets": ["0x0000000000000000000000000000000000000001"],
 					"poll_interval": "2s",
-					` + fullContracts + `
+					` + fullAave + `,
+					` + fullMorpho + `
 				}]
 			}`,
-			env:         map[string]string{"PG_DSN": "postgres://localhost/test"},
-			wantJobs:    1,
-			wantNetwork: "ethereum",
-			wantRPC:     "http://localhost:8545",
-			wantWallets: 1,
-			wantPool:    "0x1111111111111111111111111111111111111111",
+			env:          map[string]string{"PG_DSN": "postgres://localhost/test"},
+			wantJobs:     1,
+			wantNetwork:  "ethereum",
+			wantRPC:      "http://localhost:8545",
+			wantPool:     "0x1111111111111111111111111111111111111111",
 			wantInterval: 2 * time.Second,
 		},
 		{
@@ -65,16 +69,25 @@ func TestLoad(t *testing.T) {
 					{
 						"network": "ethereum",
 						"rpc_url": "http://eth-rpc",
-						"wallets": ["0x0000000000000000000000000000000000000001"],
 						"poll_interval": "1s",
-						` + fullContracts + `
+						` + fullAave + `,
+						` + fullMorpho + `
 					},
 					{
 						"network": "arbitrum",
 						"rpc_url": "http://arb-rpc",
-						"wallets": ["0x0000000000000000000000000000000000000002"],
 						"poll_interval": "1s",
-						` + fullContracts + `
+						"aave": {
+							"pool": "0x1111111111111111111111111111111111111111",
+							"data_provider": "0x2222222222222222222222222222222222222222",
+							"oracle": "0x3333333333333333333333333333333333333333",
+							"wallets": ["0x0000000000000000000000000000000000000002"]
+						},
+						"morpho": {
+							"address": "0x4444444444444444444444444444444444444444",
+							"deploy_block": 200,
+							"wallets": ["0x0000000000000000000000000000000000000002"]
+						}
 					}
 				]
 			}`,
@@ -82,7 +95,6 @@ func TestLoad(t *testing.T) {
 			wantJobs:    2,
 			wantNetwork: "ethereum",
 			wantRPC:     "http://eth-rpc",
-			wantWallets: 1,
 			wantPool:    "0x1111111111111111111111111111111111111111",
 		},
 		{
@@ -91,9 +103,9 @@ func TestLoad(t *testing.T) {
 				"jobs": [{
 					"network": "e",
 					"rpc_url": "http://rpc",
-					"wallets": ["0x0000000000000000000000000000000000000001"],
 					"poll_interval": "1s",
-					` + fullContracts + `
+					` + fullAave + `,
+					` + fullMorpho + `
 				}]
 			}`,
 			wantErr: true,
@@ -110,33 +122,85 @@ func TestLoad(t *testing.T) {
 				"jobs": [{
 					"network": "e",
 					"rpc_url": "http://rpc",
-					"wallets": ["0x0000000000000000000000000000000000000001"],
-					` + fullContracts + `
+					"aave": {
+						"pool": "0x1111111111111111111111111111111111111111",
+						"data_provider": "0x2222222222222222222222222222222222222222",
+						"oracle": "0x3333333333333333333333333333333333333333",
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					},
+					"morpho": {
+						"address": "0x4444444444444444444444444444444444444444",
+						"deploy_block": 100,
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					}
 				}]
 			}`,
 			wantErr: true,
 		},
 		{
-			name: "err_missing_contracts",
+			name: "err_missing_aave",
 			jobsJSON: `{
 				"jobs": [{
 					"network": "e",
 					"rpc_url": "http://rpc",
-					"wallets": ["0x0000000000000000000000000000000000000001"],
-					"poll_interval": "1s"
-				}]
-			}`,
-			wantErr: true,
-		},
-		{
-			name: "err_missing_wallets",
-			jobsJSON: `{
-				"jobs": [{
-					"network": "e",
-					"rpc_url": "http://rpc",
-					"wallets": [],
 					"poll_interval": "1s",
-					` + fullContracts + `
+					` + fullMorpho + `
+				}]
+			}`,
+			wantErr: true,
+		},
+		{
+			name: "err_missing_morpho",
+			jobsJSON: `{
+				"jobs": [{
+					"network": "e",
+					"rpc_url": "http://rpc",
+					"poll_interval": "1s",
+					` + fullAave + `
+				}]
+			}`,
+			wantErr: true,
+		},
+		{
+			name: "err_missing_aave_wallets",
+			jobsJSON: `{
+				"jobs": [{
+					"network": "e",
+					"rpc_url": "http://rpc",
+					"poll_interval": "1s",
+					"aave": {
+						"pool": "0x1111111111111111111111111111111111111111",
+						"data_provider": "0x2222222222222222222222222222222222222222",
+						"oracle": "0x3333333333333333333333333333333333333333",
+						"wallets": []
+					},
+					"morpho": {
+						"address": "0x4444444444444444444444444444444444444444",
+						"deploy_block": 100,
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					}
+				}]
+			}`,
+			wantErr: true,
+		},
+		{
+			name: "err_missing_morpho_wallets",
+			jobsJSON: `{
+				"jobs": [{
+					"network": "e",
+					"rpc_url": "http://rpc",
+					"poll_interval": "1s",
+					"aave": {
+						"pool": "0x1111111111111111111111111111111111111111",
+						"data_provider": "0x2222222222222222222222222222222222222222",
+						"oracle": "0x3333333333333333333333333333333333333333",
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					},
+					"morpho": {
+						"address": "0x4444444444444444444444444444444444444444",
+						"deploy_block": 100,
+						"wallets": []
+					}
 				}]
 			}`,
 			wantErr: true,
@@ -154,9 +218,18 @@ func TestLoad(t *testing.T) {
 				"jobs": [{
 					"network": "e",
 					"rpc_url": "http://rpc",
-					"wallets": ["0x0000000000000000000000000000000000000001"],
 					"poll_interval": "bad",
-					` + fullContracts + `
+					"aave": {
+						"pool": "0x1111111111111111111111111111111111111111",
+						"data_provider": "0x2222222222222222222222222222222222222222",
+						"oracle": "0x3333333333333333333333333333333333333333",
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					},
+					"morpho": {
+						"address": "0x4444444444444444444444444444444444444444",
+						"deploy_block": 100,
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					}
 				}]
 			}`,
 			wantErr: true,
@@ -166,9 +239,18 @@ func TestLoad(t *testing.T) {
 			jobsJSON: `{
 				"jobs": [{
 					"rpc_url": "http://rpc",
-					"wallets": ["0x0000000000000000000000000000000000000001"],
 					"poll_interval": "1s",
-					` + fullContracts + `
+					"aave": {
+						"pool": "0x1111111111111111111111111111111111111111",
+						"data_provider": "0x2222222222222222222222222222222222222222",
+						"oracle": "0x3333333333333333333333333333333333333333",
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					},
+					"morpho": {
+						"address": "0x4444444444444444444444444444444444444444",
+						"deploy_block": 100,
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					}
 				}]
 			}`,
 			wantErr: true,
@@ -200,8 +282,7 @@ func TestLoad(t *testing.T) {
 			job := cfg.Jobs[0]
 			assert.Equal(t, tt.wantNetwork, job.Network)
 			assert.Equal(t, tt.wantRPC, job.RPCURL)
-			assert.Equal(t, tt.wantWallets, len(job.Wallets))
-			assert.Equal(t, tt.wantPool, job.Contracts.AavePool.String())
+			assert.Equal(t, tt.wantPool, job.Aave.Pool.String())
 			if tt.wantInterval > 0 {
 				assert.Equal(t, tt.wantInterval, job.PollInterval)
 			}
