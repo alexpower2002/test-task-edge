@@ -94,12 +94,12 @@ func (p *Parser) ParsePositions(ctx context.Context, wallets []types.Address, bl
 			price = big.NewInt(0)
 		}
 		for _, wallet := range wallets {
-			supplyShares, borrowShares, collat, err := p.userPositionProvider.GetUserPosition(ctx, marketID, wallet, block.Number)
+			_, borrowShares, collat, err := p.userPositionProvider.GetUserPosition(ctx, marketID, wallet, block.Number)
 			if err != nil {
 				log.Error().Err(err).Str("wallet", wallet.String()).Str("market_id", marketID.String()).Msg("failed to read morpho position")
 				continue
 			}
-			if collat.Sign() == 0 && borrowShares.Sign() == 0 && supplyShares.Sign() == 0 {
+			if borrowShares.Sign() == 0 {
 				continue
 			}
 			borrowAssets := utils.SharesToAssets(borrowShares, totalBorrowAssets, totalBorrowShares)
@@ -109,7 +109,7 @@ func (p *Parser) ParsePositions(ctx context.Context, wallets []types.Address, bl
 				WalletAddress:   wallet.String(),
 				MarketID:        marketID.String(),
 				CollateralToken: collateral.Symbol,
-				DebtToken:       utils.DebtTokenName(loan.Symbol, borrowAssets),
+				DebtToken:       loan.Symbol,
 				PositionSize:    utils.AmountToDecimal(size, collateral.Decimals),
 				TokenPrice:      utils.AmountToDecimal(price, morphoOraclePriceDecimals),
 				HealthFactor:    p.hfComputer.GetHealthFactor(collat, borrowAssets, price, lltv),

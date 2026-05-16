@@ -3,7 +3,6 @@ package aavev3
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"test-task-edge/internal/types"
 	"test-task-edge/internal/utils"
@@ -42,10 +41,6 @@ func parseHealthFactor(words []string) (float64, error) {
 	hf, err := types.WordBig(words[5])
 	if err != nil {
 		return 0, err
-	}
-	max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
-	if hf.Cmp(max) == 0 {
-		return 0, nil
 	}
 	return utils.AmountToDecimal(hf, healthFactorDecimals), nil
 }

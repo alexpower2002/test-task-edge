@@ -78,28 +78,6 @@ func TestSharesToAssets(t *testing.T) {
 	}
 }
 
-func TestDebtTokenName(t *testing.T) {
-	tests := []struct {
-		name   string
-		symbol string
-		debt   string
-		want   string
-	}{
-		{name: "no_debt", symbol: "WETH", debt: "0", want: ""},
-		{name: "with_debt", symbol: "WETH", debt: "1", want: "WETH"},
-		{name: "nil_debt", symbol: "USDC", debt: "", want: ""},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var debt *big.Int
-			if tt.debt != "" {
-				debt, _ = new(big.Int).SetString(tt.debt, 10)
-			}
-			assert.Equal(t, tt.want, DebtTokenName(tt.symbol, debt))
-		})
-	}
-}
-
 func TestParseAddressList(t *testing.T) {
 	tests := []struct {
 		name    string

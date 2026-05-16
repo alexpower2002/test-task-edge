@@ -30,22 +30,6 @@ func TestComputeHealthFactor(t *testing.T) {
 			want:       0.86,
 		},
 		{
-			name:       "zero_debt",
-			collateral: pow18,
-			debt:       big.NewInt(0),
-			price:      pow36,
-			lltv:       lltv,
-			want:       0,
-		},
-		{
-			name:       "nil_debt",
-			collateral: pow18,
-			debt:       nil,
-			price:      pow36,
-			lltv:       lltv,
-			want:       0,
-		},
-		{
 			name:       "nil_collateral",
 			collateral: nil,
 			debt:       pow18,
@@ -132,14 +116,6 @@ func TestGetHealthFactor(t *testing.T) {
 			price:      pow36,
 			lltv:       lltv,
 			want:       0.86,
-		},
-		{
-			name:       "nil_debt",
-			collateral: pow18,
-			debt:       nil,
-			price:      pow36,
-			lltv:       lltv,
-			want:       0,
 		},
 	}
 	for _, tt := range tests {

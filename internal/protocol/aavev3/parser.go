@@ -69,7 +69,7 @@ func (p *Parser) ParsePositions(ctx context.Context, wallets []types.Address, bl
 				log.Error().Err(err).Str("wallet", wallet.String()).Str("reserve", reserve.String()).Msg("failed to read aave reserve data")
 				continue
 			}
-			if aToken.Sign() == 0 && variableDebt.Sign() == 0 {
+			if variableDebt.Sign() == 0 {
 				continue
 			}
 			price, err := p.assetPriceProvider.GetAssetPrice(ctx, reserve, block.Number)
@@ -84,7 +84,7 @@ func (p *Parser) ParsePositions(ctx context.Context, wallets []types.Address, bl
 				WalletAddress:   wallet.String(),
 				MarketID:        p.pool.String() + ":" + reserve.String(),
 				CollateralToken: token.Symbol,
-				DebtToken:       utils.DebtTokenName(token.Symbol, variableDebt),
+				DebtToken:       token.Symbol,
 				PositionSize:    utils.AmountToDecimal(size, token.Decimals),
 				TokenPrice:      utils.AmountToDecimal(price, 8),
 				HealthFactor:    healthFactor,

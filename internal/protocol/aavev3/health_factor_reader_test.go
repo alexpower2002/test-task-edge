@@ -38,9 +38,6 @@ func TestParseHealthFactor(t *testing.T) {
 	hfValue := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	hfWord := word(hfValue.Text(16))
 
-	max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
-	maxWord := word(max.Text(16))
-
 	makeWords := func(h string, n int) []string {
 		w := make([]string, n)
 		for i := range w {
@@ -67,11 +64,6 @@ func TestParseHealthFactor(t *testing.T) {
 			name:  "small_value",
 			words: makeWords(word(new(big.Int).SetInt64(1).Text(16)), 6),
 			want:  1e-18,
-		},
-		{
-			name:  "max_uint256",
-			words: makeWords(maxWord, 6),
-			want:  0,
 		},
 		{
 			name:    "too_few_words",
@@ -111,9 +103,6 @@ func TestGetHealthFactor(t *testing.T) {
 	hfValue := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	hfWord := word(hfValue.Text(16))
 
-	max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
-	maxWord := word(max.Text(16))
-
 	makeResponse := func(h string) string {
 		return "0x" + strings.Repeat("00", 32*5) + h
 	}
@@ -150,11 +139,6 @@ func TestGetHealthFactor(t *testing.T) {
 			name:    "too_few_words",
 			caller:  &stubHealthSuccess{result: "0x" + strings.Repeat("00", 32*3)},
 			wantErr: true,
-		},
-		{
-			name:   "max_uint256",
-			caller: &stubHealthSuccess{result: makeResponse(maxWord)},
-			want:   0,
 		},
 	}
 	for _, tt := range tests {

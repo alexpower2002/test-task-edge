@@ -30,13 +30,6 @@ func SharesToAssets(shares, totalAssets, totalShares *big.Int) *big.Int {
 	return new(big.Int).Div(new(big.Int).Mul(shares, totalAssets), totalShares)
 }
 
-func DebtTokenName(symbol string, debt *big.Int) string {
-	if debt == nil || debt.Sign() == 0 {
-		return ""
-	}
-	return symbol
-}
-
 func AmountToDecimal(n *big.Int, decimals int) float64 {
 	if n == nil {
 		return 0
