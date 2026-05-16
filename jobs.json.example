@@ -44,7 +44,8 @@
       "parallelism": 100,
       "scan_batch_size": 50000000,
       "wallets": [
-        "0x5987ae24fd53327f9f67c932e13e2373762228e3"
+        "0x5987ae24fd53327f9f67c932e13e2373762228e3",
+        "0x56016048ffd20603e1b2adbf5db458517c89e15d"
       ]
     }
   }
