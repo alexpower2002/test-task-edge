@@ -21,6 +21,8 @@ services:
       postgres:
         condition: service_healthy
     network_mode: "host"
+    env_file:
+      - .env
     environment:
       PG_DSN: postgres://lendingparser:lendingparser@localhost:5432/lendingparser
     restart: unless-stopped

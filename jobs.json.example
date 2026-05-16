@@ -1,4 +1,4 @@
-[
+{"jobs": [
   {
     "network": "ethereum",
     "rpc_url": "https://ethereum-rpc.publicnode.com",
@@ -20,4 +20,4 @@
       "morpho_deploy_block": 19336000
     }
   }
-]
+]}
