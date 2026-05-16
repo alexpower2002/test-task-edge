@@ -3,6 +3,7 @@ package morpho
 import (
 	"context"
 	"errors"
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
@@ -18,7 +19,23 @@ type stubLogFiltererSuccess struct {
 	logs []gethTypes.Log
 }
 
-func (s *stubLogFiltererSuccess) FilterLogs(_ context.Context, _ ethereum.FilterQuery) ([]gethTypes.Log, error) {
+func (s *stubLogFiltererSuccess) FilterLogs(_ context.Context, q ethereum.FilterQuery) ([]gethTypes.Log, error) {
+	return s.logs, nil
+}
+
+type stubLogFiltererAssert struct {
+	wantFrom *big.Int
+	wantTo   *big.Int
+	logs     []gethTypes.Log
+}
+
+func (s *stubLogFiltererAssert) FilterLogs(_ context.Context, q ethereum.FilterQuery) ([]gethTypes.Log, error) {
+	if q.FromBlock.Cmp(s.wantFrom) != 0 {
+		return nil, errors.New("unexpected from block")
+	}
+	if q.ToBlock.Cmp(s.wantTo) != 0 {
+		return nil, errors.New("unexpected to block")
+	}
 	return s.logs, nil
 }
 
@@ -45,65 +62,59 @@ func TestScanMarkets(t *testing.T) {
 
 	log1 := gethTypes.Log{
 		Topics: []common.Hash{
-			common.HexToHash(createMarketTopic),
+			common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
 			common.HexToHash("0x0100000000000000000000000000000000000000000000000000000000000000"),
 		},
 	}
 	log2 := gethTypes.Log{
 		Topics: []common.Hash{
-			common.HexToHash(createMarketTopic),
+			common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
 			common.HexToHash("0x0200000000000000000000000000000000000000000000000000000000000000"),
 		},
 	}
 
 	tests := []struct {
-		name      string
-		filterer  logFilterer
-		fromBlock uint64
-		latest    uint64
-		want      []types.Bytes32
-		wantErr   bool
+		name        string
+		filterer    logFilterer
+		blockNumber uint64
+		want        []types.Bytes32
+		wantErr     bool
 	}{
 		{
-			name:      "single_market",
-			filterer:  &stubLogFiltererSuccess{logs: []gethTypes.Log{log1}},
-			fromBlock: 0,
-			latest:    0,
-			want:      []types.Bytes32{id1},
+			name:        "single_market",
+			filterer:    &stubLogFiltererAssert{wantFrom: big.NewInt(42), wantTo: big.NewInt(42), logs: []gethTypes.Log{log1}},
+			blockNumber: 42,
+			want:        []types.Bytes32{id1},
 		},
 		{
-			name:      "multiple_markets",
-			filterer:  &stubLogFiltererSuccess{logs: []gethTypes.Log{log1, log2}},
-			fromBlock: 0,
-			latest:    0,
-			want:      []types.Bytes32{id1, id2},
+			name:        "multiple_markets",
+			filterer:    &stubLogFiltererAssert{wantFrom: big.NewInt(99), wantTo: big.NewInt(99), logs: []gethTypes.Log{log1, log2}},
+			blockNumber: 99,
+			want:        []types.Bytes32{id1, id2},
 		},
 		{
-			name:      "deduplication",
-			filterer:  &stubLogFiltererSuccess{logs: []gethTypes.Log{log1, log1}},
-			fromBlock: 0,
-			latest:    0,
-			want:      []types.Bytes32{id1},
+			name:        "deduplication",
+			filterer:    &stubLogFiltererSuccess{logs: []gethTypes.Log{log1, log1}},
+			blockNumber: 0,
+			want:        []types.Bytes32{id1},
 		},
 		{
-			name:      "no_logs",
-			filterer:  &stubLogFiltererSuccess{logs: nil},
-			fromBlock: 0,
-			latest:    0,
-			want:      nil,
+			name:        "no_logs",
+			filterer:    &stubLogFiltererSuccess{logs: nil},
+			blockNumber: 0,
+			want:        nil,
 		},
 		{
-			name:      "filter_error",
-			filterer:  &stubLogFiltererError{},
-			fromBlock: 0,
-			latest:    0,
-			wantErr:   true,
+			name:        "filter_error",
+			filterer:    &stubLogFiltererError{},
+			blockNumber: 0,
+			wantErr:     true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewMarketDiscoverer(tt.filterer, contractAddr, tt.fromBlock)
-			got, err := d.ScanMarkets(context.Background(), tt.latest)
+			d := NewMarketDiscoverer(tt.filterer, contractAddr)
+			got, err := d.ScanMarkets(context.Background(), tt.blockNumber)
 			if tt.wantErr {
 				require.Error(t, err)
 				return

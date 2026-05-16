@@ -68,7 +68,7 @@ func (a *app) registerJob(cfg config.Config, job config.JobConfig) error {
 	morphoOraclePricer := morpho.NewOraclePricer(client)
 	morphoHealthComputer := morpho.NewHealthFactorReader()
 
-	disc := morpho.NewMarketDiscoverer(client, job.Contracts.MorphoAddress, job.Contracts.MorphoDeployBlock)
+	disc := morpho.NewMarketDiscoverer(client, job.Contracts.MorphoAddress)
 	provider := morpho.NewMarketProvider(disc)
 	parser := protocol.NewComposite(
 		aavev3.NewParser(job.Contracts.AavePool, tokenProvider, aaveReserveDiscoverer, aaveUserDataReader, aaveAssetPricer, aaveHealthReader),

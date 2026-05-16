@@ -24,17 +24,18 @@ func (s *stubScannerError) ScanMarkets(_ context.Context, _ uint64) ([]types.Byt
 	return nil, errors.New("scan err")
 }
 
-type stubScannerOnce struct {
-	result []types.Bytes32
-	called bool
+type stubScannerSequential struct {
+	results [][]types.Bytes32
+	call    int
 }
 
-func (s *stubScannerOnce) ScanMarkets(_ context.Context, _ uint64) ([]types.Bytes32, error) {
-	if s.called {
-		return nil, errors.New("should not be called again")
+func (s *stubScannerSequential) ScanMarkets(_ context.Context, _ uint64) ([]types.Bytes32, error) {
+	if s.call >= len(s.results) {
+		return nil, nil
 	}
-	s.called = true
-	return s.result, nil
+	r := s.results[s.call]
+	s.call++
+	return r, nil
 }
 
 func TestMarketProvider_cold_miss(t *testing.T) {
@@ -43,21 +44,35 @@ func TestMarketProvider_cold_miss(t *testing.T) {
 
 	got, err := p.DiscoverMarkets(context.Background(), 100)
 	require.NoError(t, err)
-	assert.Equal(t, ids, got)
+	assert.ElementsMatch(t, ids, got)
 }
 
 func TestMarketProvider_cache_hit(t *testing.T) {
-	ids := []types.Bytes32{{1}}
-	once := &stubScannerOnce{result: ids}
-	p := NewMarketProvider(once)
+	p := NewMarketProvider(&stubScannerSequential{
+		results: [][]types.Bytes32{{{1}}, {}},
+	})
 
 	got1, err := p.DiscoverMarkets(context.Background(), 100)
 	require.NoError(t, err)
-	assert.Equal(t, ids, got1)
+	assert.ElementsMatch(t, []types.Bytes32{{1}}, got1)
 
 	got2, err := p.DiscoverMarkets(context.Background(), 200)
 	require.NoError(t, err)
-	assert.Equal(t, ids, got2)
+	assert.Equal(t, []types.Bytes32{{1}}, got2)
+}
+
+func TestMarketProvider_new_markets_accumulate(t *testing.T) {
+	p := NewMarketProvider(&stubScannerSequential{
+		results: [][]types.Bytes32{{{1}}, {{2}}},
+	})
+
+	got1, err := p.DiscoverMarkets(context.Background(), 100)
+	require.NoError(t, err)
+	assert.Equal(t, []types.Bytes32{{1}}, got1)
+
+	got2, err := p.DiscoverMarkets(context.Background(), 200)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []types.Bytes32{{1}, {2}}, got2)
 }
 
 func TestMarketProvider_scan_error(t *testing.T) {

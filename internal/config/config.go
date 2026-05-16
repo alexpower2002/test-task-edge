@@ -14,11 +14,10 @@ import (
 )
 
 type ContractsConfig struct {
-	AavePool          types.Address `json:"aave_pool"`
-	AaveDataProvider  types.Address `json:"aave_data_provider"`
-	AaveOracle        types.Address `json:"aave_oracle"`
-	MorphoAddress     types.Address `json:"morpho_address"`
-	MorphoDeployBlock uint64        `json:"morpho_deploy_block"`
+	AavePool         types.Address `json:"aave_pool"`
+	AaveDataProvider types.Address `json:"aave_data_provider"`
+	AaveOracle       types.Address `json:"aave_oracle"`
+	MorphoAddress    types.Address `json:"morpho_address"`
 }
 
 type JobConfig struct {
@@ -42,11 +41,10 @@ type jobEntry struct {
 }
 
 type contractsEntry struct {
-	AavePool          string  `json:"aave_pool"`
-	AaveDataProvider  string  `json:"aave_data_provider"`
-	AaveOracle        string  `json:"aave_oracle"`
-	MorphoAddress     string  `json:"morpho_address"`
-	MorphoDeployBlock *uint64 `json:"morpho_deploy_block"`
+	AavePool         string `json:"aave_pool"`
+	AaveDataProvider string `json:"aave_data_provider"`
+	AaveOracle       string `json:"aave_oracle"`
+	MorphoAddress    string `json:"morpho_address"`
 }
 
 type Config struct {
@@ -185,10 +183,6 @@ func parseContracts(entry contractsEntry) (ContractsConfig, error) {
 	if entry.MorphoAddress == "" {
 		return ContractsConfig{}, fmt.Errorf("morpho_address is required")
 	}
-	if entry.MorphoDeployBlock == nil {
-		return ContractsConfig{}, fmt.Errorf("morpho_deploy_block is required")
-	}
-
 	pool, err := utils.ParseAddress(entry.AavePool)
 	if err != nil {
 		return ContractsConfig{}, fmt.Errorf("aave_pool: %w", err)
@@ -207,11 +201,10 @@ func parseContracts(entry contractsEntry) (ContractsConfig, error) {
 	}
 
 	return ContractsConfig{
-		AavePool:          pool,
-		AaveDataProvider:  dataProvider,
-		AaveOracle:        oracle,
-		MorphoAddress:     morphoAddr,
-		MorphoDeployBlock: *entry.MorphoDeployBlock,
+		AavePool:         pool,
+		AaveDataProvider: dataProvider,
+		AaveOracle:       oracle,
+		MorphoAddress:    morphoAddr,
 	}, nil
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 type marketScanner interface {
-	ScanMarkets(ctx context.Context, latestBlock uint64) ([]types.Bytes32, error)
+	ScanMarkets(ctx context.Context, blockNumber uint64) ([]types.Bytes32, error)
 }
 
 type MarketProvider struct {
@@ -17,24 +17,29 @@ type MarketProvider struct {
 	cache   sync.Map
 }
 
-var marketKey = "markets"
-
 func NewMarketProvider(scanner marketScanner) *MarketProvider {
 	return &MarketProvider{scanner: scanner}
 }
 
-func (p *MarketProvider) DiscoverMarkets(ctx context.Context, latestBlock uint64) ([]types.Bytes32, error) {
-	if cached, ok := p.cache.Load(marketKey); ok {
-		return cached.([]types.Bytes32), nil
-	}
-
-	ids, err := p.scanner.ScanMarkets(ctx, latestBlock)
+func (p *MarketProvider) DiscoverMarkets(ctx context.Context, blockNumber uint64) ([]types.Bytes32, error) {
+	newIDs, err := p.scanner.ScanMarkets(ctx, blockNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	p.cache.Store(marketKey, ids)
+	for _, id := range newIDs {
+		p.cache.Store(id.String(), id)
+	}
 
-	log.Info().Int("count", len(ids)).Msg("discovered morpho markets")
-	return ids, nil
+	var all []types.Bytes32
+	p.cache.Range(func(key, value interface{}) bool {
+		all = append(all, value.(types.Bytes32))
+		return true
+	})
+
+	if len(newIDs) > 0 {
+		log.Info().Int("new", len(newIDs)).Int("total", len(all)).Msg("discovered morpho markets")
+	}
+
+	return all, nil
 }

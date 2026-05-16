@@ -16,8 +16,7 @@
       "aave_pool": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
       "aave_data_provider": "0x0a16f2FCC0D44FaE41cc54e079281D84A363bECD",
       "aave_oracle": "0x54586bE62E3c3580375aE3723C145253060Ca0C2",
-      "morpho_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
-      "morpho_deploy_block": 19336000
+      "morpho_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb"
     }
   }
 ]}

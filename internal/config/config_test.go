@@ -14,8 +14,7 @@ const fullContracts = `"contracts": {
 	"aave_pool": "0x1111111111111111111111111111111111111111",
 	"aave_data_provider": "0x2222222222222222222222222222222222222222",
 	"aave_oracle": "0x3333333333333333333333333333333333333333",
-	"morpho_address": "0x4444444444444444444444444444444444444444",
-	"morpho_deploy_block": 100
+	"morpho_address": "0x4444444444444444444444444444444444444444"
 }`
 
 func writeJobsFile(t *testing.T, content string) string {
