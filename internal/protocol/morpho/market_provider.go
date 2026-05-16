@@ -2,6 +2,7 @@ package morpho
 
 import (
 	"context"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 	"test-task-edge/internal/types"
@@ -13,16 +14,18 @@ type marketScanner interface {
 
 type MarketProvider struct {
 	scanner marketScanner
-	cache   *marketCache
+	cache   sync.Map
 }
 
+var marketKey = "markets"
+
 func NewMarketProvider(scanner marketScanner) *MarketProvider {
-	return &MarketProvider{scanner: scanner, cache: newMarketCache()}
+	return &MarketProvider{scanner: scanner}
 }
 
 func (p *MarketProvider) DiscoverMarkets(ctx context.Context, latestBlock uint64) ([]types.Bytes32, error) {
-	if cached, ok := p.cache.get(); ok {
-		return cached, nil
+	if cached, ok := p.cache.Load(marketKey); ok {
+		return cached.([]types.Bytes32), nil
 	}
 
 	ids, err := p.scanner.ScanMarkets(ctx, latestBlock)
@@ -30,7 +33,7 @@ func (p *MarketProvider) DiscoverMarkets(ctx context.Context, latestBlock uint64
 		return nil, err
 	}
 
-	p.cache.set(ids)
+	p.cache.Store(marketKey, ids)
 
 	log.Info().Int("count", len(ids)).Msg("discovered morpho markets")
 	return ids, nil

@@ -54,7 +54,8 @@ func (a *app) registerJob(job config.JobConfig) error {
 	}
 	a.clients = append(a.clients, client)
 
-	tokenCache := ethereum.NewTokenCache(client)
+	tokenReader := ethereum.NewTokenReader(client)
+	tokenProvider := ethereum.NewTokenProvider(tokenReader)
 
 	aaveReserveDiscoverer := aavev3.NewReserveDiscoverer(client, job.Contracts.AaveDataProvider)
 	aaveUserDataReader := aavev3.NewUserDataReader(client, job.Contracts.AaveDataProvider)
@@ -70,8 +71,8 @@ func (a *app) registerJob(job config.JobConfig) error {
 	disc := morpho.NewMarketDiscoverer(client, job.Contracts.MorphoAddress, job.Contracts.MorphoDeployBlock)
 	provider := morpho.NewMarketProvider(disc)
 	parser := protocol.NewComposite(
-		aavev3.NewParser(job.Contracts.AavePool, tokenCache, aaveReserveDiscoverer, aaveUserDataReader, aaveAssetPricer, aaveHealthReader),
-		morpho.NewParser(tokenCache, provider, morphoPositionReader, morphoMarketParamsReader, morphoMarketDataReader, morphoOraclePricer, morphoHealthComputer),
+		aavev3.NewParser(job.Contracts.AavePool, tokenProvider, aaveReserveDiscoverer, aaveUserDataReader, aaveAssetPricer, aaveHealthReader),
+		morpho.NewParser(tokenProvider, provider, morphoPositionReader, morphoMarketParamsReader, morphoMarketDataReader, morphoOraclePricer, morphoHealthComputer),
 	)
 	a.workers = append(a.workers, worker.New(job.Network, client, parser, job.Wallets, a.storage))
 
