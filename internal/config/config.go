@@ -7,16 +7,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"test-task-edge/internal/types"
 	"test-task-edge/internal/utils"
 )
 
 type ContractsConfig struct {
-	AavePool         types.Address `json:"aave_pool"`
-	AaveDataProvider types.Address `json:"aave_data_provider"`
-	AaveOracle       types.Address `json:"aave_oracle"`
-	MorphoAddress    types.Address `json:"morpho_address"`
-	MorphoDeployBlock uint64       `json:"morpho_deploy_block"`
+	AavePool          types.Address `json:"aave_pool"`
+	AaveDataProvider  types.Address `json:"aave_data_provider"`
+	AaveOracle        types.Address `json:"aave_oracle"`
+	MorphoAddress     types.Address `json:"morpho_address"`
+	MorphoDeployBlock uint64        `json:"morpho_deploy_block"`
 }
 
 type JobConfig struct {
@@ -32,27 +33,29 @@ type jobsFile struct {
 }
 
 type jobEntry struct {
-	Network      string              `json:"network"`
-	RPCURL       string              `json:"rpc_url"`
-	Wallets      []string            `json:"wallets"`
-	PollInterval string              `json:"poll_interval"`
-	Contracts    contractsEntry      `json:"contracts"`
+	Network      string         `json:"network"`
+	RPCURL       string         `json:"rpc_url"`
+	Wallets      []string       `json:"wallets"`
+	PollInterval string         `json:"poll_interval"`
+	Contracts    contractsEntry `json:"contracts"`
 }
 
 type contractsEntry struct {
-	AavePool         string  `json:"aave_pool"`
-	AaveDataProvider string  `json:"aave_data_provider"`
-	AaveOracle       string  `json:"aave_oracle"`
-	MorphoAddress    string  `json:"morpho_address"`
+	AavePool          string  `json:"aave_pool"`
+	AaveDataProvider  string  `json:"aave_data_provider"`
+	AaveOracle        string  `json:"aave_oracle"`
+	MorphoAddress     string  `json:"morpho_address"`
 	MorphoDeployBlock *uint64 `json:"morpho_deploy_block"`
 }
 
 type Config struct {
-	Jobs   []JobConfig
-	PGDSN  string
+	Jobs  []JobConfig
+	PGDSN string
 }
 
 func Load() (Config, error) {
+	_ = godotenv.Load()
+
 	pgDSN, err := getEnv("PG_DSN")
 	if err != nil {
 		return Config{}, err

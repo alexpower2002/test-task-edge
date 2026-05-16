@@ -76,5 +76,3 @@ func TestComposite_ParsePositions(t *testing.T) {
 		})
 	}
 }
-
-
