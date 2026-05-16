@@ -19,7 +19,7 @@ func TestComputeHealthFactor(t *testing.T) {
 		debt       *big.Int
 		price      *big.Int
 		lltv       *big.Int
-		want       string
+		want       float64
 	}{
 		{
 			name:       "numeric",
@@ -27,7 +27,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       pow18,
 			price:      pow36,
 			lltv:       lltv,
-			want:       "0.860000",
+			want:       0.86,
 		},
 		{
 			name:       "zero_debt",
@@ -35,7 +35,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       big.NewInt(0),
 			price:      pow36,
 			lltv:       lltv,
-			want:       "0",
+			want:       0,
 		},
 		{
 			name:       "nil_debt",
@@ -43,7 +43,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       nil,
 			price:      pow36,
 			lltv:       lltv,
-			want:       "0",
+			want:       0,
 		},
 		{
 			name:       "nil_collateral",
@@ -51,7 +51,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       pow18,
 			price:      pow36,
 			lltv:       lltv,
-			want:       "0",
+			want:       0,
 		},
 		{
 			name:       "nil_price",
@@ -59,7 +59,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       pow18,
 			price:      nil,
 			lltv:       lltv,
-			want:       "0",
+			want:       0,
 		},
 		{
 			name:       "nil_lltv",
@@ -67,7 +67,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       pow18,
 			price:      pow36,
 			lltv:       nil,
-			want:       "0",
+			want:       0,
 		},
 		{
 			name:       "zero_collateral",
@@ -75,7 +75,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       pow18,
 			price:      pow36,
 			lltv:       lltv,
-			want:       "0.000000",
+			want:       0,
 		},
 		{
 			name:       "zero_price",
@@ -83,7 +83,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       pow18,
 			price:      big.NewInt(0),
 			lltv:       lltv,
-			want:       "0.000000",
+			want:       0,
 		},
 		{
 			name:       "exact_ratio",
@@ -91,7 +91,7 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       new(big.Int).Mul(big.NewInt(50), pow18),
 			price:      pow36,
 			lltv:       big.NewInt(500000000000000000),
-			want:       "1.000000",
+			want:       1.0,
 		},
 		{
 			name:       "large_values",
@@ -99,12 +99,12 @@ func TestComputeHealthFactor(t *testing.T) {
 			debt:       big.NewInt(1),
 			price:      pow36,
 			lltv:       big.NewInt(1000000000000000000),
-			want:       "1000000000000000000000000.000000",
+			want:       1e24,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, computeHealthFactor(tt.collateral, tt.debt, tt.price, tt.lltv))
+			assert.InDelta(t, tt.want, computeHealthFactor(tt.collateral, tt.debt, tt.price, tt.lltv), 1e-9)
 		})
 	}
 }
@@ -123,7 +123,7 @@ func TestGetHealthFactor(t *testing.T) {
 		debt       *big.Int
 		price      *big.Int
 		lltv       *big.Int
-		want       string
+		want       float64
 	}{
 		{
 			name:       "ok",
@@ -131,7 +131,7 @@ func TestGetHealthFactor(t *testing.T) {
 			debt:       pow18,
 			price:      pow36,
 			lltv:       lltv,
-			want:       "0.860000",
+			want:       0.86,
 		},
 		{
 			name:       "nil_debt",
@@ -139,13 +139,13 @@ func TestGetHealthFactor(t *testing.T) {
 			debt:       nil,
 			price:      pow36,
 			lltv:       lltv,
-			want:       "0",
+			want:       0,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := r.GetHealthFactor(tt.collateral, tt.debt, tt.price, tt.lltv)
-			assert.Equal(t, tt.want, got)
+			assert.InDelta(t, tt.want, got, 1e-9)
 		})
 	}
 }

@@ -28,17 +28,17 @@ func (s *stubReservesError) DiscoverReserves(_ context.Context, _ uint64) ([]typ
 }
 
 type stubHealthOK struct {
-	hf string
+	hf float64
 }
 
-func (s *stubHealthOK) GetHealthFactor(_ context.Context, _ types.Address, _ uint64) (string, error) {
+func (s *stubHealthOK) GetHealthFactor(_ context.Context, _ types.Address, _ uint64) (float64, error) {
 	return s.hf, nil
 }
 
 type stubHFError struct{}
 
-func (s *stubHFError) GetHealthFactor(_ context.Context, _ types.Address, _ uint64) (string, error) {
-	return "", errors.New("health err")
+func (s *stubHFError) GetHealthFactor(_ context.Context, _ types.Address, _ uint64) (float64, error) {
+	return 0, errors.New("health err")
 }
 
 type stubUserStateOK struct {
@@ -105,7 +105,7 @@ func TestParsePositions(t *testing.T) {
 		{
 			name:      "single_wallet_single_reserve",
 			reserves:  &stubReservesOK{reserves: []types.Address{reserve}},
-			health:    &stubHealthOK{hf: "1.5"},
+			health:    &stubHealthOK{hf: 1.5},
 			userState: &stubUserStateOK{deposit: deposit, borrow: big.NewInt(0)},
 			price:     &stubPriceOK{price: price},
 			token:     &stubTokenOK{token: token},
@@ -115,7 +115,7 @@ func TestParsePositions(t *testing.T) {
 		{
 			name:      "multiple_wallets",
 			reserves:  &stubReservesOK{reserves: []types.Address{reserve}},
-			health:    &stubHealthOK{hf: "1.2"},
+			health:    &stubHealthOK{hf: 1.2},
 			userState: &stubUserStateOK{deposit: deposit, borrow: big.NewInt(0)},
 			price:     &stubPriceOK{price: price},
 			token:     &stubTokenOK{token: token},
@@ -140,7 +140,7 @@ func TestParsePositions(t *testing.T) {
 		{
 			name:      "user_state_error",
 			reserves:  &stubReservesOK{reserves: []types.Address{reserve}},
-			health:    &stubHealthOK{hf: "1.5"},
+			health:    &stubHealthOK{hf: 1.5},
 			userState: &stubUserStateError{},
 			price:     &stubPriceOK{price: price},
 			token:     &stubTokenOK{token: token},
@@ -150,7 +150,7 @@ func TestParsePositions(t *testing.T) {
 		{
 			name:      "both_zero",
 			reserves:  &stubReservesOK{reserves: []types.Address{reserve}},
-			health:    &stubHealthOK{hf: "1.5"},
+			health:    &stubHealthOK{hf: 1.5},
 			userState: &stubUserStateOK{deposit: big.NewInt(0), borrow: big.NewInt(0)},
 			price:     &stubPriceOK{price: price},
 			token:     &stubTokenOK{token: token},
@@ -160,7 +160,7 @@ func TestParsePositions(t *testing.T) {
 		{
 			name:      "price_error",
 			reserves:  &stubReservesOK{reserves: []types.Address{reserve}},
-			health:    &stubHealthOK{hf: "1.5"},
+			health:    &stubHealthOK{hf: 1.5},
 			userState: &stubUserStateOK{deposit: deposit, borrow: big.NewInt(0)},
 			price:     &stubAssetPriceError{},
 			token:     &stubTokenOK{token: token},
@@ -170,7 +170,7 @@ func TestParsePositions(t *testing.T) {
 		{
 			name:      "multiple_reserves",
 			reserves:  &stubReservesOK{reserves: []types.Address{reserve, reserve2}},
-			health:    &stubHealthOK{hf: "1.5"},
+			health:    &stubHealthOK{hf: 1.5},
 			userState: &stubUserStateOK{deposit: deposit, borrow: big.NewInt(0)},
 			price:     &stubPriceOK{price: price},
 			token:     &stubTokenOK{token: token},
@@ -180,7 +180,7 @@ func TestParsePositions(t *testing.T) {
 		{
 			name:      "borrow_present",
 			reserves:  &stubReservesOK{reserves: []types.Address{reserve}},
-			health:    &stubHealthOK{hf: "0.8"},
+			health:    &stubHealthOK{hf: 0.8},
 			userState: &stubUserStateOK{deposit: big.NewInt(0), borrow: deposit},
 			price:     &stubPriceOK{price: price},
 			token:     &stubTokenOK{token: token},

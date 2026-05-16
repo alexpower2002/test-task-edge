@@ -13,15 +13,15 @@ func TestAmountToDecimal(t *testing.T) {
 		name     string
 		n        *big.Int
 		decimals int
-		want     string
+		want     float64
 	}{
-		{name: "six_decimals", n: big.NewInt(123456789), decimals: 6, want: "123.456789"},
-		{name: "nil_is_zero", n: nil, decimals: 18, want: "0"},
-		{name: "zero", n: big.NewInt(0), decimals: 2, want: "0.00"},
+		{name: "six_decimals", n: big.NewInt(123456789), decimals: 6, want: 123.456789},
+		{name: "nil_is_zero", n: nil, decimals: 18, want: 0},
+		{name: "zero", n: big.NewInt(0), decimals: 2, want: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, AmountToDecimal(tt.n, tt.decimals))
+			assert.InDelta(t, tt.want, AmountToDecimal(tt.n, tt.decimals), 1e-9)
 		})
 	}
 }

@@ -27,7 +27,7 @@ type assetPriceProvider interface {
 }
 
 type healthFactorProvider interface {
-	GetHealthFactor(ctx context.Context, user types.Address, block uint64) (string, error)
+	GetHealthFactor(ctx context.Context, user types.Address, block uint64) (float64, error)
 }
 
 type Parser struct {
@@ -61,7 +61,7 @@ func (p *Parser) ParsePositions(ctx context.Context, wallets []types.Address, bl
 		healthFactor, err := p.healthFactorProvider.GetHealthFactor(ctx, wallet, block.Number)
 		if err != nil {
 			log.Error().Err(err).Str("wallet", wallet.String()).Msg("failed to read aave health factor")
-			healthFactor = "0"
+			healthFactor = 0
 		}
 		for _, reserve := range reserves {
 			aToken, variableDebt, err := p.userStateProvider.GetUserState(ctx, reserve, wallet, block.Number)

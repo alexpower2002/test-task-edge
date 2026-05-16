@@ -35,7 +35,7 @@ type oraclePriceProvider interface {
 }
 
 type healthFactorComputer interface {
-	GetHealthFactor(collateral, debt, price, lltv *big.Int) string
+	GetHealthFactor(collateral, debt, price, lltv *big.Int) float64
 }
 
 type Parser struct {

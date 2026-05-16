@@ -37,13 +37,13 @@ func DebtTokenName(symbol string, debt *big.Int) string {
 	return symbol
 }
 
-func AmountToDecimal(n *big.Int, decimals int) string {
+func AmountToDecimal(n *big.Int, decimals int) float64 {
 	if n == nil {
-		return "0"
+		return 0
 	}
 	scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
-	r := new(big.Rat).SetFrac(n, scale)
-	return r.FloatString(decimals)
+	f, _ := new(big.Rat).SetFrac(n, scale).Float64()
+	return f
 }
 
 func ParseAddressList(raw []string) ([]types.Address, error) {

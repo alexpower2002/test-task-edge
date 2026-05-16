@@ -55,23 +55,23 @@ func TestParseHealthFactor(t *testing.T) {
 	tests := []struct {
 		name    string
 		words   []string
-		want    string
+		want    float64
 		wantErr bool
 	}{
 		{
 			name:  "ok",
 			words: makeWords(hfWord, 6),
-			want:  "1.000000000000000000",
+			want:  1.0,
 		},
 		{
 			name:  "small_value",
 			words: makeWords(word(new(big.Int).SetInt64(1).Text(16)), 6),
-			want:  "0.000000000000000001",
+			want:  1e-18,
 		},
 		{
 			name:  "max_uint256",
 			words: makeWords(maxWord, 6),
-			want:  "0",
+			want:  0,
 		},
 		{
 			name:    "too_few_words",
@@ -79,9 +79,9 @@ func TestParseHealthFactor(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "more_than_6_words",
-			words:   makeWords(hfWord, 10),
-			want:    "1.000000000000000000",
+			name:  "more_than_6_words",
+			words: makeWords(hfWord, 10),
+			want:  1.0,
 		},
 		{
 			name:    "invalid_word",
@@ -97,7 +97,7 @@ func TestParseHealthFactor(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
+			assert.InDelta(t, tt.want, got, 1e-12)
 		})
 	}
 }
@@ -108,7 +108,7 @@ func TestGetHealthFactor(t *testing.T) {
 	user, err := utils.ParseAddress("0x0000000000000000000000000000000000000001")
 	require.NoError(t, err)
 
-	hfValue := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil) // 1 * 10^18 = 1.0 with 18 decimals
+	hfValue := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	hfWord := word(hfValue.Text(16))
 
 	max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
@@ -121,20 +121,20 @@ func TestGetHealthFactor(t *testing.T) {
 	tests := []struct {
 		name    string
 		caller  ethCaller
-		want    string
+		want    float64
 		wantErr bool
 	}{
 		{
 			name:   "ok",
 			caller: &stubHealthSuccess{result: makeResponse(hfWord)},
-			want:   "1.000000000000000000",
+			want:   1.0,
 		},
 		{
 			name: "small_value",
 			caller: &stubHealthSuccess{result: makeResponse(
 				word(new(big.Int).SetInt64(1).Text(16)),
 			)},
-			want: "0.000000000000000001",
+			want: 1e-18,
 		},
 		{
 			name:    "eth_call_error",
@@ -154,7 +154,7 @@ func TestGetHealthFactor(t *testing.T) {
 		{
 			name:   "max_uint256",
 			caller: &stubHealthSuccess{result: makeResponse(maxWord)},
-			want:   "0",
+			want:   0,
 		},
 	}
 	for _, tt := range tests {
@@ -166,7 +166,7 @@ func TestGetHealthFactor(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
+			assert.InDelta(t, tt.want, got, 1e-12)
 		})
 	}
 }

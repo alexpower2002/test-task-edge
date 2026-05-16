@@ -23,29 +23,29 @@ func NewHealthFactorReader(client ethCaller, pool types.Address) *HealthFactorRe
 	return &HealthFactorReader{client: client, pool: pool}
 }
 
-func (r *HealthFactorReader) GetHealthFactor(ctx context.Context, user types.Address, block uint64) (string, error) {
+func (r *HealthFactorReader) GetHealthFactor(ctx context.Context, user types.Address, block uint64) (float64, error) {
 	raw, err := r.client.EthCall(ctx, r.pool, types.CallData(selectorGetUserAccountData, types.WordAddress(user)), block)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	words, err := types.DecodeWords(raw)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	return parseHealthFactor(words)
 }
 
-func parseHealthFactor(words []string) (string, error) {
+func parseHealthFactor(words []string) (float64, error) {
 	if len(words) < 6 {
-		return "", fmt.Errorf("unexpected account data word count %d", len(words))
+		return 0, fmt.Errorf("unexpected account data word count %d", len(words))
 	}
 	hf, err := types.WordBig(words[5])
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
 	if hf.Cmp(max) == 0 {
-		return "0", nil
+		return 0, nil
 	}
 	return utils.AmountToDecimal(hf, healthFactorDecimals), nil
 }
