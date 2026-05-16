@@ -37,7 +37,7 @@ func (a *app) Register() error {
 	}
 
 	for _, job := range cfg.Jobs {
-		if err := a.registerJob(job); err != nil {
+		if err := a.registerJob(cfg, job); err != nil {
 			return err
 		}
 	}
@@ -45,10 +45,10 @@ func (a *app) Register() error {
 	return nil
 }
 
-func (a *app) registerJob(job config.JobConfig) error {
+func (a *app) registerJob(cfg config.Config, job config.JobConfig) error {
 	log.Info().Str("network", job.Network).Msg("registering job")
 
-	client, err := ethereum.NewRPCClient(job.RPCURL, job.PollInterval)
+	client, err := ethereum.NewRPCClient(job.RPCURL, job.PollInterval, cfg.RPCMaxRetries, cfg.RPCRetryWait, cfg.RPCTimeout)
 	if err != nil {
 		return err
 	}

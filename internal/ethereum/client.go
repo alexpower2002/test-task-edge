@@ -35,7 +35,7 @@ type RPCClient struct {
 	RPCTimeout   time.Duration
 }
 
-func NewRPCClient(url string, pollInterval time.Duration) (*RPCClient, error) {
+func NewRPCClient(url string, pollInterval time.Duration, maxRetries int, retryWait time.Duration, rpcTimeout time.Duration) (*RPCClient, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{},
 		TLSNextProto:    make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
@@ -56,9 +56,9 @@ func NewRPCClient(url string, pollInterval time.Duration) (*RPCClient, error) {
 	return &RPCClient{
 		ethCaller:    ethClient,
 		pollInterval: pollInterval,
-		MaxRetries:   3,
-		RetryWait:    time.Second,
-		RPCTimeout:   15 * time.Second,
+		MaxRetries:   maxRetries,
+		RetryWait:    retryWait,
+		RPCTimeout:   rpcTimeout,
 	}, nil
 }
 

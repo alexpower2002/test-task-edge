@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,8 +50,11 @@ type contractsEntry struct {
 }
 
 type Config struct {
-	Jobs  []JobConfig
-	PGDSN string
+	Jobs          []JobConfig
+	PGDSN         string
+	RPCMaxRetries int
+	RPCRetryWait  time.Duration
+	RPCTimeout    time.Duration
 }
 
 func Load() (Config, error) {
@@ -73,7 +77,39 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("at least one job is required")
 	}
 
-	return Config{Jobs: jobs, PGDSN: pgDSN}, nil
+	rpcMaxRetries := 3
+	rpcRetryWait := time.Second
+	rpcTimeout := 15 * time.Second
+
+	if v := os.Getenv("RPC_MAX_RETRIES"); v != "" {
+		if n, err := strconv.Atoi(v); err != nil {
+			return Config{}, fmt.Errorf("invalid RPC_MAX_RETRIES: %q", v)
+		} else {
+			rpcMaxRetries = n
+		}
+	}
+	if v := os.Getenv("RPC_RETRY_WAIT"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return Config{}, fmt.Errorf("invalid RPC_RETRY_WAIT: %w", err)
+		}
+		rpcRetryWait = d
+	}
+	if v := os.Getenv("RPC_TIMEOUT"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return Config{}, fmt.Errorf("invalid RPC_TIMEOUT: %w", err)
+		}
+		rpcTimeout = d
+	}
+
+	return Config{
+		Jobs:          jobs,
+		PGDSN:         pgDSN,
+		RPCMaxRetries: rpcMaxRetries,
+		RPCRetryWait:  rpcRetryWait,
+		RPCTimeout:    rpcTimeout,
+	}, nil
 }
 
 func loadJobs(path string) ([]JobConfig, error) {
