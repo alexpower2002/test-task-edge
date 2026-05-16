@@ -46,12 +46,12 @@ func (s *stubPollerFixed) BlockByNumber(_ context.Context, n uint64) (types.Bloc
 	return types.BlockRef{Number: n}, nil
 }
 
-type mockPollerRPCErr struct {
+type stubPollerRPCErr struct {
 	mu      sync.Mutex
 	attempt int
 }
 
-func (s *mockPollerRPCErr) LatestBlock(_ context.Context) (types.BlockRef, error) {
+func (s *stubPollerRPCErr) LatestBlock(_ context.Context) (types.BlockRef, error) {
 	s.mu.Lock()
 	s.attempt++
 	attempt := s.attempt
@@ -62,7 +62,7 @@ func (s *mockPollerRPCErr) LatestBlock(_ context.Context) (types.BlockRef, error
 	return types.BlockRef{Number: 1}, nil
 }
 
-func (s *mockPollerRPCErr) BlockByNumber(_ context.Context, n uint64) (types.BlockRef, error) {
+func (s *stubPollerRPCErr) BlockByNumber(_ context.Context, n uint64) (types.BlockRef, error) {
 	return types.BlockRef{Number: n, Timestamp: 100}, nil
 }
 
@@ -150,7 +150,7 @@ func TestWorker_blockByNumberError(t *testing.T) {
 	defer cancel()
 
 	saver := &mockSaver{}
-	w := New("test", &mockPollerRPCErr{}, protocol.NewComposite(&stubParserOk{}), nil, saver)
+	w := New("test", &stubPollerRPCErr{}, protocol.NewComposite(&stubParserOk{}), nil, saver)
 
 	err := w.Run(ctx)
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
