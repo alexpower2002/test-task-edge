@@ -17,7 +17,7 @@ type blockPoller interface {
 }
 
 type blockParser interface {
-	ParseBlock(ctx context.Context, wallets []types.Address, block types.BlockRef) []protocol.Position
+	ParsePositions(ctx context.Context, wallets []types.Address, block types.BlockRef) ([]protocol.Position, error)
 }
 
 type positionSaver interface {
@@ -79,7 +79,7 @@ func (w *Worker) processRange(ctx context.Context, head types.BlockRef, last uin
 
 func (w *Worker) handleBlock(ctx context.Context, block types.BlockRef) {
 	log.Info().Str("network", w.network).Uint64("block", block.Number).Msg("processing block")
-	positions := w.parser.ParseBlock(ctx, w.wallets, block)
+	positions, _ := w.parser.ParsePositions(ctx, w.wallets, block)
 
 	for i := range positions {
 		positions[i].Network = w.network
