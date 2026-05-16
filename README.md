@@ -76,7 +76,7 @@ type positionsParser interface {
 ParsePositions(ctx context.Context, wallets []types.Address, block types.BlockRef) ([]Position, error)
 }
 ```
-+ блок в `jobs.json` + поля в `config.go` + пробросить в ините в `app.go`.
+плюс блок в `jobs.json` плюс поля в `config.go` плюс пробросить в ините в `app.go`.
 
 Новая EVM-сеть - просто ещё один джоб в `jobs.json` со своими адресами и названием сети, которое будет писаться в `network` колонку.
 Код не нужно менять, при интеграции Arbitrum проблем не было, кроме ограничений публичного эндпоинта.
