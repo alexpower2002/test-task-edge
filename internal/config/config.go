@@ -20,9 +20,10 @@ type AaveConfig struct {
 }
 
 type MorphoConfig struct {
-	Address     types.Address `json:"address"`
-	DeployBlock uint64        `json:"deploy_block"`
-	Parallelism int           `json:"parallelism"`
+	Address       types.Address `json:"address"`
+	DeployBlock   uint64        `json:"deploy_block"`
+	Parallelism   int           `json:"parallelism"`
+	ScanBatchSize uint64        `json:"scan_batch_size"`
 }
 
 type JobConfig struct {
@@ -47,10 +48,11 @@ type aaveEntry struct {
 }
 
 type morphoEntry struct {
-	Address     string   `json:"address"`
-	DeployBlock *uint64  `json:"deploy_block"`
-	Wallets     []string `json:"wallets"`
-	Parallelism *int     `json:"parallelism,omitempty"`
+	Address       string   `json:"address"`
+	DeployBlock   *uint64  `json:"deploy_block"`
+	Wallets       []string `json:"wallets"`
+	Parallelism   *int     `json:"parallelism,omitempty"`
+	ScanBatchSize *uint64  `json:"scan_batch_size,omitempty"`
 }
 
 type jobEntry struct {
@@ -255,10 +257,16 @@ func parseMorpho(entry morphoEntry) (MorphoConfig, error) {
 		parallelism = *entry.Parallelism
 	}
 
+	scanBatchSize := uint64(10000)
+	if entry.ScanBatchSize != nil {
+		scanBatchSize = *entry.ScanBatchSize
+	}
+
 	return MorphoConfig{
-		Address:     addr,
-		DeployBlock: *entry.DeployBlock,
-		Parallelism: parallelism,
+		Address:       addr,
+		DeployBlock:   *entry.DeployBlock,
+		Parallelism:   parallelism,
+		ScanBatchSize: scanBatchSize,
 	}, nil
 }
 

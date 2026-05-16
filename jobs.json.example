@@ -25,5 +25,27 @@
         "0x5987ae24fd53327f9f67c932e13e2373762228e3"
       ]
     }
+  },
+  {
+    "network": "arbitrum",
+    "rpc_url": "https://arb1.arbitrum.io/rpc",
+    "poll_interval": "12s",
+    "aave": {
+      "pool": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+      "data_provider": "0x243Aa95cAC2a25651eda86e80bEe66114413c43b",
+      "oracle": "0xb56c2F0B653B2e0b10C9b928C8580Ac5Df02C7C7",
+      "wallets": [
+        "0x3393a183a8c07f8648bb2ae05da0e2ce64a6fe92"
+      ]
+    },
+    "morpho": {
+      "address": "0x6c247b1F6182318877311737BaC0844bAa518F5e",
+      "deploy_block": 296446593,
+      "parallelism": 100,
+      "scan_batch_size": 50000000,
+      "wallets": [
+        "0x5987ae24fd53327f9f67c932e13e2373762228e3"
+      ]
+    }
   }
 ]}

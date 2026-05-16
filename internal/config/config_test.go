@@ -20,6 +20,7 @@ const fullAave = `"aave": {
 const fullMorpho = `"morpho": {
 	"address": "0x4444444444444444444444444444444444444444",
 	"deploy_block": 100,
+	"scan_batch_size": 50000,
 	"wallets": ["0x0000000000000000000000000000000000000001"]
 }`
 
@@ -33,16 +34,17 @@ func writeJobsFile(t *testing.T, content string) string {
 
 func TestLoad(t *testing.T) {
 	tests := []struct {
-		name         string
-		jobsJSON     string
-		env          map[string]string
-		noFile       bool
-		wantErr      bool
-		wantJobs     int
-		wantNetwork  string
-		wantRPC      string
-		wantPool     string
-		wantInterval time.Duration
+		name          string
+		jobsJSON      string
+		env           map[string]string
+		noFile        bool
+		wantErr       bool
+		wantJobs      int
+		wantNetwork   string
+		wantRPC       string
+		wantPool      string
+		wantInterval  time.Duration
+		wantBatchSize uint64
 	}{
 		{
 			name: "ok_single_job",
@@ -55,12 +57,13 @@ func TestLoad(t *testing.T) {
 					` + fullMorpho + `
 				}]
 			}`,
-			env:          map[string]string{"PG_DSN": "postgres://localhost/test"},
-			wantJobs:     1,
-			wantNetwork:  "ethereum",
-			wantRPC:      "http://localhost:8545",
-			wantPool:     "0x1111111111111111111111111111111111111111",
-			wantInterval: 2 * time.Second,
+			env:           map[string]string{"PG_DSN": "postgres://localhost/test"},
+			wantJobs:      1,
+			wantNetwork:   "ethereum",
+			wantRPC:       "http://localhost:8545",
+			wantPool:      "0x1111111111111111111111111111111111111111",
+			wantInterval:  2 * time.Second,
+			wantBatchSize: 50000,
 		},
 		{
 			name: "ok_multiple_jobs",
@@ -96,6 +99,29 @@ func TestLoad(t *testing.T) {
 			wantNetwork: "ethereum",
 			wantRPC:     "http://eth-rpc",
 			wantPool:    "0x1111111111111111111111111111111111111111",
+		},
+		{
+			name: "ok_default_scan_batch_size",
+			jobsJSON: `{
+				"jobs": [{
+					"network": "ethereum",
+					"rpc_url": "http://localhost:8545",
+					"poll_interval": "1s",
+					` + fullAave + `,
+					"morpho": {
+						"address": "0x4444444444444444444444444444444444444444",
+						"deploy_block": 100,
+						"wallets": ["0x0000000000000000000000000000000000000001"]
+					}
+				}]
+			}`,
+			env:           map[string]string{"PG_DSN": "postgres://localhost/test"},
+			wantJobs:      1,
+			wantNetwork:   "ethereum",
+			wantRPC:       "http://localhost:8545",
+			wantPool:      "0x1111111111111111111111111111111111111111",
+			wantInterval: time.Second,
+			wantBatchSize: 10000,
 		},
 		{
 			name: "err_missing_pg_dsn",
@@ -285,6 +311,9 @@ func TestLoad(t *testing.T) {
 			assert.Equal(t, tt.wantPool, job.Aave.Pool.String())
 			if tt.wantInterval > 0 {
 				assert.Equal(t, tt.wantInterval, job.PollInterval)
+			}
+			if tt.wantBatchSize > 0 {
+				assert.Equal(t, tt.wantBatchSize, job.Morpho.ScanBatchSize)
 			}
 		})
 	}

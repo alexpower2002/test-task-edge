@@ -119,7 +119,7 @@ func TestScanMarkets(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewMarketDiscoverer(tt.filterer, contractAddr, tt.deployBlock)
+			d := NewMarketDiscoverer(tt.filterer, contractAddr, tt.deployBlock, 10000)
 			got, err := d.ScanMarkets(context.Background(), tt.blockNumber)
 			if tt.wantErr {
 				require.Error(t, err)

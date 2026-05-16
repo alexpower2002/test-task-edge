@@ -12,27 +12,26 @@ import (
 	"test-task-edge/internal/types"
 )
 
-const (
-	createMarketTopic = "0xac4b2400f169220b0c0afdde7a0b32e775ba727ea1cb30b35f935cdaab8683ac"
-	scanBatchSize     = 10000
-)
+const createMarketTopic = "0xac4b2400f169220b0c0afdde7a0b32e775ba727ea1cb30b35f935cdaab8683ac"
 
 type logFilterer interface {
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]gethTypes.Log, error)
 }
 
 type MarketDiscoverer struct {
-	logFilterer logFilterer
-	address     types.Address
-	mu          sync.Mutex
-	scannedUpTo uint64
+	logFilterer   logFilterer
+	address       types.Address
+	mu            sync.Mutex
+	scannedUpTo   uint64
+	scanBatchSize uint64
 }
 
-func NewMarketDiscoverer(logFilterer logFilterer, address types.Address, deployBlock uint64) *MarketDiscoverer {
+func NewMarketDiscoverer(logFilterer logFilterer, address types.Address, deployBlock uint64, scanBatchSize uint64) *MarketDiscoverer {
 	return &MarketDiscoverer{
-		logFilterer: logFilterer,
-		address:     address,
-		scannedUpTo: deployBlock,
+		logFilterer:   logFilterer,
+		address:       address,
+		scannedUpTo:   deployBlock,
+		scanBatchSize: scanBatchSize,
 	}
 }
 
@@ -45,14 +44,12 @@ func (d *MarketDiscoverer) ScanMarkets(ctx context.Context, blockNumber uint64) 
 	}
 
 	from := d.scannedUpTo
-	d.scannedUpTo = blockNumber
-
 	var ids []types.Bytes32
 	seen := make(map[string]bool)
 	topic := common.HexToHash(createMarketTopic)
 
 	for from <= blockNumber {
-		to := from + scanBatchSize - 1
+		to := from + d.scanBatchSize - 1
 		if to > blockNumber {
 			to = blockNumber
 		}
@@ -84,5 +81,6 @@ func (d *MarketDiscoverer) ScanMarkets(ctx context.Context, blockNumber uint64) 
 		from = to + 1
 	}
 
+	d.scannedUpTo = blockNumber
 	return ids, nil
 }
